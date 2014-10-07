@@ -1,0 +1,18 @@
+{
+  "name": "rdio-spotify-artistfollow",
+  "description": "Follow your artists from Rdio on Spotify",
+  "version": "1.0.2",
+  "author": {
+    "name": "Matthew Murray",
+    "email": "mattm.trinsic@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mattmur/rdio-spotify-artistfollow"
+  },
+  "dependencies": {
+    "express" : "4.9.5",
+    "rdio" : "1.5.2",
+    "spotify-web-api-node" : "1.0.2"
+  }
+}
