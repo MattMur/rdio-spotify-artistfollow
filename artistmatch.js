@@ -142,7 +142,6 @@ function composeHTML(widgetHTML, res) {
 			"</body>" +
 			"</html>";
 
-			console.log(html);
 			res.send(html);
 }
 

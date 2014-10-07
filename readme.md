@@ -6,8 +6,8 @@ This script will match the artists you follow on Rdio to artists on Spotify. Unf
 ### Steps
 
 1. Download this repo from git
-2. Download and install Node.js
-3. Open terminal and change dir to the repo on your local harddrive
+2. Download and [install Node.js](http://nodejs.org/download/)
+3. Open terminal and change dir to the repo on your local hard drive
 4. Run "npm install"
 5. Run "node artistmatch"
 
