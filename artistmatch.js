@@ -76,7 +76,17 @@ rdio.getRequestToken(function(error, oauth_token, oauth_token_secret, results) {
 		console.log(login_url);
 		cp.exec("open '"+login_url + "'"); // open browser.. MAY NOT WORK ON WINDOWS
 	} else {
-		console.log('Error: '+error);
+		console.log('Error: '+ error.statusCode);
+		if (error.data.indexOf('!DOCTYPE html') > -1) {
+			var fs = require('fs');
+			fs.writeFile("error.html", error.data, function(err) {
+			    if(err) {
+			        return console.log(err);
+			    } else {
+			    	cp.exec("open 'error.html'");
+			    }
+			}); 
+		}
 	}
 });
 
