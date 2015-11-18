@@ -67,36 +67,6 @@ app.get('/rdiocallback', function(req, res) {
 	});
 });
 
-app.listen(port);
-console.log("Now listening on port "+port);
-
-
-
-
-// Login to Rdio
-console.log('Attempt login to Rdio');
-open('https://www.rdio.com/oauth2/authorize?response_type=code&client_id=' + config.rdio.clientId + '&redirect_uri=' + config.rdio.redirectUri);
-// rdio.getRequestToken(function(error, oauth_token, oauth_token_secret, results) {
-// 	if (!error) {
-// 		rdio_secret = oauth_token_secret;
-// 		var login_url = results.login_url + '?oauth_token=' + oauth_token;
-// 		console.log(login_url);
-// 		open(login_url);
-// 	} else {
-// 		console.log('Error: '+ error.statusCode);
-// 		if (error.data.indexOf('!DOCTYPE html') > -1) {
-// 			var fs = require('fs');
-// 			fs.writeFile("error.html", error.data, function(err) {
-// 			    if(err) {
-// 			        return console.log(err);
-// 			    } else {
-// 			    	open("error.html");
-// 			    }
-// 			});
-// 		}
-// 	}
-// });
-
 app.get("/follow/:page", function followRdioArtistsOnSpotify(req, res) {
 	var page = (+req.params.page - 1) || 0;
 	rdio.request({
@@ -162,3 +132,11 @@ function composeHTML(widgetHTML, nextPage, res) {
 
 	res.send(pageSource);
 }
+
+
+app.listen(port);
+console.log("Now listening on port "+port);
+
+// Login to Rdio
+console.log('Attempt login to Rdio');
+open('https://www.rdio.com/oauth2/authorize?response_type=code&client_id=' + config.rdio.clientId + '&redirect_uri=' + config.rdio.redirectUri);
