@@ -99,6 +99,16 @@ app.get("/follow/:page", function followRdioArtistsOnSpotify(req, res) {
 			var artistIds = [];
 
 			var numRequests = 0;
+			if (artists.length === 0) {
+				var pageSource = makePage(
+					'<h2 style="color: green;">Done!</h2>' +
+					'<div><a href="https://play.spotify.com/collection/artists" target="_blank">Check your artists</a></div>'
+				);
+
+
+				res.send(pageSource);
+			}
+
 			artists.forEach(function(artist) {
 
 				if (artist.name === "Various Artists") {
