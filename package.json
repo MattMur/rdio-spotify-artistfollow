@@ -14,7 +14,7 @@
     "express": "4.9.5",
     "open": "0.0.5",
     "rdio": "^3.1.0",
-    "spotify-web-api-node": "1.0.2",
+    "spotify-web-api-node": "^2.1.0",
     "timeout-after": "0.0.3"
   }
 }
