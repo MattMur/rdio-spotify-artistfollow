@@ -11,7 +11,9 @@ This script will match the artists you follow on Rdio to artists on Spotify. Unf
 4. Run "npm install"
 5. Run "node artistmatch"
 
-A web page should appear from Rdio asking if you trust this app. Click accept. Shortly after the script will run and a new webpage will return with all the follow widgets embeded. Let the clicking ensue.
+~~A web page should appear from Rdio asking if you trust this app. Click accept. Shortly after the script will run and a new webpage will return with all the follow widgets embeded. Let the clicking ensue. ~~
+
+`Update`: After authenticating the script should now automatically follow all artists from Rdio. 
 
 
 
