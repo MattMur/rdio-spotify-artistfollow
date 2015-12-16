@@ -1,0 +1,47 @@
+extends ./base.jade
+
+block title
+    title Follow them on Spotify
+
+block content
+    if artists.length
+        +followAll(pageInfo.currentPage)
+        +pages(pageInfo)
+        div(class="row")
+            each artist, index in artists
+                +column(artist)
+        +pages(pageInfo)
+    else
+        h1 No artists found.
+
+mixin column(artist)
+    div(class='col-sm-4 text-center')
+        h1= artist.name
+        if artist.match
+            iframe(
+                src="https://embed.spotify.com/follow/1/?uri=spotify:artist:"+ artist.match +"&size=detail&theme=light"
+                width="300"
+                height="56"
+                scrolling="no"
+                frameborder="0"
+                style="border:none; overflow:hidden;"
+                allowtransparency="true"
+            )
+        else
+            h2= artist.name + " has no match."
+
+mixin pages(pageInfo)
+    div(class="row")
+        div(class="panel panel-default")
+            div(class="panel-body")
+                if pageInfo.previousPage
+                    a(href="/follow/"+pageInfo.previousPage class="btn btn-success pull-left") &laquo; Previous Page 
+                if pageInfo.nextPage
+                    a(href="/follow/"+pageInfo.nextPage class="btn btn-success pull-right") Next Page &raquo;
+
+mixin followAll(page)
+    div(class="row")
+        div(class="panel panel-default")
+            div(class="panel-body")
+                a(href="/follow/all?page=" + page, class="btn btn-primary") Follow all artists on page
+                p(class="pull-right") Note that the buttons below always say follow, even if you already follow the artist.

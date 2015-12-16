@@ -1,6 +1,8 @@
 
 
 var port = process.env.PORT || 8001;
+var defaultRedirectUri = '/follow/1';
+var pageCount = 50;
 
 // Rdio
 var config = {
@@ -30,11 +32,10 @@ var spotify = new SpotifyWebApi({
 var open = require("open");
 var express = require('express');
 var app = express();
+app.set('view engine', 'jade');
 
 var rdio;
 var spotifyUser;
-
-var count = 0;
 
 app.get('/rdiocallback', function(req, res) {
 	console.log('Verifying Auth...');
@@ -42,12 +43,7 @@ app.get('/rdiocallback', function(req, res) {
 	rdio.getAccessToken({code: req.query.code, redirect: config.rdio.redirectUri}, function(error) {
 		if (!error) {
 			console.log('Rdio_Access granted');
-
-
-			// res.end(makePage('<a href="' + spotify.createAuthorizeURL(['user-follow-modify'], 'state-not-really-needed') + '">Now login to spotify</a>'));
 			res.redirect(spotify.createAuthorizeURL(['user-follow-modify'], 'state-not-really-needed'));
-
-
 		} else {
 			console.error('Access Error: '+JSON.stringify(error));
 			res.status(500).end();
@@ -70,7 +66,7 @@ app.get('/spotifycallback', function(req, res) {
 			accessToken: data['access_token']
 		});
 
-		res.redirect("/follow/1");
+		res.redirect(defaultRedirectUri);
 
 	}, function(err) {
 		console.log('Something went wrong when retrieving an access token', err);
@@ -83,34 +79,81 @@ app.get('/spotifycallback', function(req, res) {
 
 });
 
-app.get("/follow/:page", function followRdioArtistsOnSpotify(req, res) {
+app.get("/follow/all", function test(req, res) {
+	if (!req.query.page) {
+		res.redirect(defaultRedirectUri);
+		console.log('no page')
+
+		return;
+	}
+
 	var page = (+req.params.page - 1) || 0;
+
 	rdio.request({
 		method: 'getArtistsInCollection',
 		sort: 'name',
-		count: '50',
+		count: pageCount,
+		start: page * 50
+	}, function(error, results) {
+		console.log('results are in ')
+		var numRequests = 0,
+			artistIds = [];
+
+		results.result.forEach(function (artist){
+			if (artist.name === "Various Artists") {
+				return;
+			}
+			numRequests++;
+			unpromiseWithTimeout(spotify.searchArtists(artist.name), function (err, searchres) {
+				if (err) { 
+					console.log("Error searching for artist " + artist.name);
+					console.log(err);
+
+					return;
+				}
+				numRequests--;
+				var artistMatches = searchres.body.artists.items;
+				for (var i in searchres.body.artists.items) {
+					if (artistMatches[i].name.toLowerCase() === artist.name.toLowerCase()) {
+						console.log("Adding ID to list: " + artistMatches[i].id)
+						artistIds.push(artistMatches[i].id);
+						break;
+					}
+				}
+
+				if (numRequests === 0) {
+					unpromiseWithTimeout(spotifyUser.followArtists(artistIds), function(err) {
+						res.redirect('/follow/' + (page + 1));
+					});	
+				}
+			});
+		})
+	});
+})
+
+app.get("/follow/:page", function followRdioArtistsOnSpotify(req, res) {
+	var page = (+req.params.page - 1) || 0;
+
+	rdio.request({
+		method: 'getArtistsInCollection',
+		sort: 'name',
+		count: pageCount,
 		start: page * 50
 	}, function(error, results) {
 		console.log('Found Rdio artists. Matching...');
+
 		if (!error) {
 			var artists = results.result;
-			//console.log(tracks);
-			var artistWidgetHTML = "";
 			var artistIds = [];
-
 			var numRequests = 0;
-			if (artists.length === 0) {
-				var pageSource = makePage(
-					'<h2 style="color: green;">Done!</h2>' +
-					'<div><a href="https://play.spotify.com/collection/artists" target="_blank">Check your artists</a></div>'
-				);
 
-
-				res.send(pageSource);
+			if (artists.length === 0 && page === 0) {
+				res.render('artists', {artists: [], pageInfo: {nextPage: null, previousPage: null}})
+			} else if (artists.length === 0){
+				res.redirect(defaultRedirectUri);
 			}
 
 			artists.forEach(function(artist) {
-
 				if (artist.name === "Various Artists") {
 					return;
 				}
@@ -122,23 +165,21 @@ app.get("/follow/:page", function followRdioArtistsOnSpotify(req, res) {
 					numRequests--;
 					var matches = searchres.body;
 					if (!err) {
-						console.log(artist.name+" "+artist.artistKey);
 						var artistMatch = {name : ""};
 						var i = 0;
+
 						while (artist.name.toLowerCase() !== artistMatch.name.toLowerCase() ) {
 							artistMatch = matches.artists.items[i++]
-							console.log("matches: "+artistMatch.name + " (id: " + artistMatch.id + ")");
+							console.log("matches: " + artistMatch.name + " (id: " + artistMatch.id + ")");
 							if (i >= matches.artists.items.count ) break;
 						}
 
 						if (artist.name.toLowerCase() === artistMatch.name.toLowerCase()) {
-
-							artistWidgetHTML += '<iframe src="https://embed.spotify.com/follow/1/?uri=spotify:artist:'+ artistMatch.id +'&size=detail&theme=light" width="300" height="56" scrolling="no" frameborder="0" style="border:none; overflow:hidden;" allowtransparency="true"></iframe>';
-							artistIds.push(artistMatch.id);
+							artist.match = artistMatch.id;
 							console.log('numRequests - '+numRequests);
 
 						} else {
-							console.log("Could not find match.");
+							console.log("Could not find match for " + artist.name);
 						}
 					} else {
 						console.log("Error: " + err);
@@ -146,24 +187,13 @@ app.get("/follow/:page", function followRdioArtistsOnSpotify(req, res) {
 
 					if (numRequests == 0) {
 						// done
-						console.log("Following artists...");
-						console.log(JSON.stringify(artistIds));
-						unpromiseWithTimeout(spotifyUser.followArtists(artistIds), function(err) {
-							var nextPage = page + 2;
-							console.log("Displaying page...");
+						var pageInfo = {
+							nextPage: artists.length === pageCount ? page + 2 : null,
+							previousPage: page !== 0 ? page : null,
+							currentPage: page + 1
+						};
 
-							if (err) console.log(err);
-
-							var pageSource = makePage(
-								(err ? '<h2 style="color: red;">Could not automatically follow</h2>' : '<h2>Followed the following artists</h2>') + artistWidgetHTML +
-								'<div><h3><a href="/follow/' + nextPage + '">Next Page of Follows</a></h3></div>' +
-								'<div><a href="https://play.spotify.com/collection/artists" target="_blank">Check your artists</a></div>'
-							);
-
-							console.log("page size: " + pageSource.length);
-
-							res.send(pageSource);
-						});
+						res.render('artists', { artists: artists, pageInfo: pageInfo });
 					};
 				});
 			});
@@ -172,13 +202,6 @@ app.get("/follow/:page", function followRdioArtistsOnSpotify(req, res) {
 		}
 	});
 });
-
-function makePage(html) {
-	return ('<!DOCTYPE html><html><head>'+
-		'<title>Follow Your Rdio Artists</title></head><body>' + html +
-		'</body></html>'
-	);
-}
 
 app.listen(port);
 console.log("Now listening on port "+port);
