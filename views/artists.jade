@@ -16,7 +16,6 @@ block content
 
 mixin column(artist)
     div(class='col-sm-4 text-center')
-        h1= artist.name
         if artist.match
             iframe(
                 src="https://embed.spotify.com/follow/1/?uri=spotify:artist:"+ artist.match +"&size=detail&theme=light"
@@ -28,7 +27,7 @@ mixin column(artist)
                 allowtransparency="true"
             )
         else
-            h2= artist.name + " has no match."
+            p= artist.name + " has no match."
 
 mixin pages(pageInfo)
     div(class="row")
